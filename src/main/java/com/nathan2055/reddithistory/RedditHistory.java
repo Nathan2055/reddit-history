@@ -19,7 +19,7 @@ import java.util.*;
 
 import static org.apache.commons.lang3.StringEscapeUtils.unescapeHtml4;
 
-public class App {
+public class RedditHistory {
 
     public static final Integer LIMIT = 100;
     public static final ObjectMapper MAPPER = new ObjectMapper();
@@ -162,7 +162,7 @@ public class App {
     }
 
     public static void main(String[] args) throws Exception {
-        new App().doMain(args);
+        new RedditHistory().doMain(args);
     }
 
     public void doMain(String[] args) throws Exception {
