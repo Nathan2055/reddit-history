@@ -21,247 +21,226 @@ import static org.apache.commons.lang3.StringEscapeUtils.unescapeHtml4;
 
 public class App {
 
-  static Logger log = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+    public static final Integer LIMIT = 100;
+    public static final ObjectMapper MAPPER = new ObjectMapper();
+    public static final Set<String> SAVE_TYPES = new LinkedHashSet<>(Arrays.asList(
+            "overview", "saved", "comments", "submitted"));
+    static final Logger log = (Logger) LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME);
+    @Option(name = "-loglevel", usage = "Sets the log level [INFO, DEBUG, etc.]")
+    private final String loglevel = "INFO";
+    @Option(name = "-sort", usage = "The sort order (top, new)")
+    private final String sort = "top";
+    @Option(name = "-username", usage = "Your username", required = true)
+    private String username;
+    @Option(name = "-password", usage = "Your password", required = true)
+    private String password;
+    @Option(name = "-client_id", usage = "Your client id", required = true)
+    private String clientId;
+    @Option(name = "-client_secret", usage = "Your client secret", required = true)
+    private String clientSecret;
+    @Option(name = "-user", usage = "The user you want to query", required = true)
+    private String user;
 
-  public static final Integer LIMIT = 100;
+    public static void fetcher(String accessToken, String user, String endpoint, String sort) throws Exception {
 
-  @Option(name="-loglevel", usage="Sets the log level [INFO, DEBUG, etc.]")
-  private String loglevel = "INFO";
+        File saveFile = new File("reddit_history", "reddit_" + user + "_" + endpoint + "_" + sort + ".md");
+        log.info("file: " + saveFile.getAbsolutePath());
 
-  @Option(name="-username", usage="Your username", required = true)
-  private String username;
-
-  @Option(name="-password", usage="Your password", required = true)
-  private String password;
-
-  @Option(name="-client_id", usage="Your client id", required = true)
-  private String clientId;
-
-  @Option(name="-client_secret", usage="Your client secret", required = true)
-  private String clientSecret;
-
-  @Option(name="-user", usage="The user you want to query", required = true)
-  private String user;
-
-  @Option(name="-sort", usage="The sort order (top, new)")
-  private String sort = "top";
-
-  public static final ObjectMapper MAPPER = new ObjectMapper();
-
-  public static final Set<String> SAVE_TYPES = new LinkedHashSet<>(Arrays.asList(
-        "overview", "saved", "comments", "submitted"));
-
-  public void doMain( String[] args ) throws Exception {
-
-    parseArguments(args);
-
-    log.setLevel(Level.toLevel(loglevel));
-
-    String accessToken = getAccessToken(username, password, clientId, clientSecret);
-
-    for (String saveType : SAVE_TYPES) {
-      fetcher(accessToken, user, saveType, sort);
+        String after = null;
+        int i = 0;
+        while (after != null || i == 0) {
+            JsonNode node = fetchJson(accessToken, user, endpoint, sort, after);
+            ++i;
+            if (node != null && !node.has("error")) {
+                log.debug(convertNodeToJson(node));
+                after = node.has("data") ? node.get("data").get("after").asText() : "null";
+                if (after.equals("null")) after = null;
+                List<Data> list = extractData(node);
+                saveData(saveFile, convertListToMarkdown(list));
+                Thread.sleep(1050);
+                log.info("fetch count = " + i);
+                log.debug("after = " + after);
+            }
+        }
     }
 
-  }
+    // example: https://github.com/reddit/reddit/wiki/OAuth2-Quick-Start-Example
+    public static String getAccessToken(String username, String password, String clientId, String clientSecret) throws Exception {
 
-  public static void fetcher(String accessToken, String user, String endpoint, String sort) throws Exception {
+        HttpRequest req = HttpRequest.post("https://www.reddit.com/api/v1/access_token")
+                .basic(clientId, clientSecret)
+                .header("User-Agent", "reddit-history/0.1 by " + username)
+                .form("grant_type", "password")
+                .form("username", username)
+                .form("password", password);
 
-    File saveFile = new File("reddit_history", "reddit_" + user + "_" + endpoint + "_" + sort + ".md");
-    log.info("file: " + saveFile.getAbsolutePath());
+        String body = req.body();
+        log.info(body);
 
-    String after = null;
-    int i = 0;
-    while (after != null || i == 0) {
-      JsonNode node = fetchJson(accessToken, user, endpoint, sort, after);
-      ++i;
-      if (node != null && !node.has("error")) {
-        log.debug(convertNodeToJson(node));
-        after = node.has("data") ? node.get("data").get("after").asText() : "null";
-        if (after.equals("null")) after = null;
-        List<Data> list = extractData(node);
-        saveData(saveFile, convertListToMarkdown(list));
-        Thread.sleep(1050);
-        log.info("fetch count = " + i);
-        log.debug("after = " + after);
-      }
-    }
-  }
-
-
-
-  // example: https://github.com/reddit/reddit/wiki/OAuth2-Quick-Start-Example
-  public static String getAccessToken(String username, String password, String clientId, String clientSecret) throws Exception {
-
-    HttpRequest req = HttpRequest.post("https://www.reddit.com/api/v1/access_token")
-      .basic(clientId, clientSecret)
-      .header("User-Agent", "reddit-history/0.1 by " + username)
-      .form("grant_type", "password")
-      .form("username", username)
-      .form("password", password);
-
-    String body = req.body();
-    log.info(body);
-    String accessToken = convertJsonToNode(body).get("access_token").asText();
-
-    return accessToken;
-  }
-
-  public static JsonNode fetchJson(String accessToken, String user, String endpoint, String sort, String after) throws Exception {
-    //        https://oauth.reddit.com/user/asdf/comments.json?after=AFTER_ID&limit=100
-
-    Map<String, String> params = new HashMap<>();
-    params.put("limit", LIMIT.toString());
-    params.put("sort", sort);
-
-    if (after != null) {
-      params.put("after", after);
+        return convertJsonToNode(body).get("access_token").asText();
     }
 
-    HttpRequest req = HttpRequest.get("https://oauth.reddit.com/user/" + user + "/" + endpoint + ".json", params, true)
-      .header("Authorization", "bearer " + accessToken)
-      .header("User-Agent", "reddit-history/0.1 by " + user);
+    public static JsonNode fetchJson(String accessToken, String user, String endpoint, String sort, String after) throws Exception {
+        //        https://oauth.reddit.com/user/asdf/comments.json?after=AFTER_ID&limit=100
 
-    printRateLimits(req);
+        Map<String, String> params = new HashMap<>();
+        params.put("limit", LIMIT.toString());
+        params.put("sort", sort);
 
-    JsonNode node = convertJsonToNode(req.body());
+        if (after != null) {
+            params.put("after", after);
+        }
 
-    return node;
-  }
+        HttpRequest req = HttpRequest.get("https://oauth.reddit.com/user/" + user + "/" + endpoint + ".json", params, true)
+                .header("Authorization", "bearer " + accessToken)
+                .header("User-Agent", "reddit-history/0.1 by " + user);
 
-  public static String convertListToMarkdown(List<Data> list) {
+        printRateLimits(req);
 
-    StringBuilder sb = new StringBuilder();
-
-    for (Data data : list) {
-      sb.append(data.toMarkdown());
+        return convertJsonToNode(req.body());
     }
 
-    return sb.toString();
-  }
+    public static String convertListToMarkdown(List<Data> list) {
 
-  public static List<Data> extractData(JsonNode node) throws JsonProcessingException {
+        StringBuilder sb = new StringBuilder();
 
-    List<Data> list = new ArrayList<>();
-    JsonNode children = node.get("data").get("children");
-    for (JsonNode child : children) {
-      JsonNode d = child.get("data");
+        for (Data data : list) {
+            sb.append(data.toMarkdown());
+        }
 
-      String kind = child.get("kind").asText();
-      String type_ = kind.equals("t1") ? "Comment" : "Link";
-      String subreddit = d.get("subreddit").asText();
-      String linkTitle = d.has("link_title") ?
-        d.get("link_title").asText() :
-        d.get("title").asText();
-      String linkUrl = d.has("link_id") ?
-        "https://reddit.com/r/" + subreddit + "/" + d.get("link_id").asText().split("_")[1] :
-        "https://reddit.com/r/" + subreddit + "/" + d.get("id").asText();
-      String body = d.has("body") ?
-        d.get("body").asText() :
-        d.get("selftext").asText();
-      Integer score = d.get("score").asInt();
-      list.add(new Data(type_, subreddit, linkTitle, linkUrl, unescapeHtml4(body), score));
+        return sb.toString();
     }
 
-    return list;
-  }
+    public static List<Data> extractData(JsonNode node) {
 
-  public static void printRateLimits(HttpRequest req) {
-    log.debug("rate remaining : " + req.header("X-Ratelimit-Remaining"));
-    log.debug("rate used : " + req.header("X-Ratelimit-Used"));
-    log.debug("rate reset : " + req.header("X-Ratelimit-Reset"));
-  }
+        List<Data> list = new ArrayList<>();
+        JsonNode children = node.get("data").get("children");
+        for (JsonNode child : children) {
+            JsonNode d = child.get("data");
 
-  public static void saveData(File f, String data) {
-    try {
-      if (!f.getParentFile().exists()) f.getParentFile().mkdirs();
-      if(!f.exists()) f.createNewFile();
-      Files.write(f.toPath(), data.getBytes(), StandardOpenOption.APPEND);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
+            String kind = child.get("kind").asText();
+            String type_ = kind.equals("t1") ? "Comment" : "Link";
+            String subreddit = d.get("subreddit").asText();
+            String linkTitle = d.has("link_title") ?
+                    d.get("link_title").asText() :
+                    d.get("title").asText();
+            String linkUrl = d.has("link_id") ?
+                    "https://reddit.com/r/" + subreddit + "/" + d.get("link_id").asText().split("_")[1] :
+                    "https://reddit.com/r/" + subreddit + "/" + d.get("id").asText();
+            String body = d.has("body") ?
+                    d.get("body").asText() :
+                    d.get("selftext").asText();
+            Integer score = d.get("score").asInt();
+            list.add(new Data(type_, subreddit, linkTitle, linkUrl, unescapeHtml4(body), score));
+        }
 
-  public static class Data {
-    private String linkUrl, body, subreddit, linkTitle, type_;
-    private Integer score;
-
-    public Data(String type_, String subreddit, String linkTitle, String linkUrl, String body, Integer score) {
-      this.linkUrl = linkUrl;
-      this.body = body;
-      this.linkTitle = linkTitle;
-      this.subreddit = subreddit;
-      this.type_ = type_;
-      this.score = score;
+        return list;
     }
 
-    public String toMarkdown() {
-      StringBuilder sb = new StringBuilder();
-      sb.append("Type: " + type_ + "\n\n");
-      sb.append("subreddit: " + "[" + subreddit + "](https://reddit.com/r/" + subreddit + ")\n\n");
-      sb.append("[" + linkTitle + "](" + linkUrl + ")\n\n");
-      sb.append("Score: " + score + "\n\n");
-      sb.append(body);
-      sb.append("\n\n---\n\n");
-
-      return sb.toString();
+    public static void printRateLimits(HttpRequest req) {
+        log.debug("rate remaining : " + req.header("X-Ratelimit-Remaining"));
+        log.debug("rate used : " + req.header("X-Ratelimit-Used"));
+        log.debug("rate reset : " + req.header("X-Ratelimit-Reset"));
     }
 
-    public String getLinkUrl() {
-      return linkUrl;
+    public static void saveData(File f, String data) {
+        try {
+            if (!f.getParentFile().exists()) f.getParentFile().mkdirs();
+            if (!f.exists()) f.createNewFile();
+            Files.write(f.toPath(), data.getBytes(), StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
-    public String getBody() {
-      return body;
+    public static String convertNodeToJson(JsonNode node) throws JsonProcessingException {
+        return MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(node);
     }
 
-    public String getSubreddit() {
-      return subreddit;
+    public static JsonNode convertJsonToNode(String json) throws IOException {
+        return MAPPER.readTree(json);
     }
 
-    public String getLinkTitle() {
-      return linkTitle;
+    public static void main(String[] args) throws Exception {
+        new App().doMain(args);
     }
 
-    public String getType_() {
-      return type_;
+    public void doMain(String[] args) throws Exception {
+
+        parseArguments(args);
+
+        log.setLevel(Level.toLevel(loglevel));
+
+        String accessToken = getAccessToken(username, password, clientId, clientSecret);
+
+        for (String saveType : SAVE_TYPES) {
+            fetcher(accessToken, user, saveType, sort);
+        }
+
     }
 
-    public Integer getScore() {
-      return score;
+    private void parseArguments(String[] args) {
+        CmdLineParser parser = new CmdLineParser(this);
+
+        try {
+            parser.parseArgument(args);
+        } catch (CmdLineException e) {
+            // if there's a problem in the command line,
+            // you'll get this exception. this will report
+            // an error message.
+            System.err.println(e.getMessage());
+            System.err.println("java -jar reddit-history.jar [options...] arguments...");
+            // print the list of available options
+            parser.printUsage(System.err);
+            System.err.println();
+            System.exit(0);
+
+        }
     }
-  }
 
-  public static String convertNodeToJson(JsonNode node) throws JsonProcessingException {
-    return MAPPER.writerWithDefaultPrettyPrinter().writeValueAsString(node);
-  }
+    public static class Data {
+        private final String linkUrl, body, subreddit, linkTitle, type_;
+        private Integer score;
 
-  public static JsonNode convertJsonToNode(String json) throws IOException {
-    return MAPPER.readTree(json);
-  }
+        public Data(String type_, String subreddit, String linkTitle, String linkUrl, String body, Integer score) {
+            this.linkUrl = linkUrl;
+            this.body = body;
+            this.linkTitle = linkTitle;
+            this.subreddit = subreddit;
+            this.type_ = type_;
+            this.score = score;
+        }
 
-  private void parseArguments(String[] args) {
-    CmdLineParser parser = new CmdLineParser(this);
+        public String toMarkdown() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Type: ").append(type_).append("\n\n").append("subreddit: " + "[").append(subreddit).append("](https://reddit.com/r/").append(subreddit).append(")\n\n").append("[").append(linkTitle).append("](").append(linkUrl).append(")\n\n").append("Score: ").append(score).append("\n\n").append(body).append("\n\n---\n\n");
 
-    try {
-      parser.parseArgument(args);
-    } catch (CmdLineException e) {
-      // if there's a problem in the command line,
-      // you'll get this exception. this will report
-      // an error message.
-      System.err.println(e.getMessage());
-      System.err.println("java -jar reddit-history.jar [options...] arguments...");
-      // print the list of available options
-      parser.printUsage(System.err);
-      System.err.println();
-      System.exit(0);
+            return sb.toString();
+        }
 
-      return;
+        public String getLinkUrl() {
+            return linkUrl;
+        }
+
+        public String getBody() {
+            return body;
+        }
+
+        public String getSubreddit() {
+            return subreddit;
+        }
+
+        public String getLinkTitle() {
+            return linkTitle;
+        }
+
+        public String getType_() {
+            return type_;
+        }
+
+        public Integer getScore() {
+            return score;
+        }
     }
-  }
-
-  public static void main(String[] args) throws Exception {
-    new App().doMain(args);
-  }
 
 }
