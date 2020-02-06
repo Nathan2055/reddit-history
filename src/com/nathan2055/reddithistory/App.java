@@ -1,4 +1,4 @@
-package com.reddit.history;
+package com.nathan2055.reddithistory;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
