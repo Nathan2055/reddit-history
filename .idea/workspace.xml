@@ -1,14 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="a4f7391e-203c-45b7-bd54-deb9d2e4ea79" name="Default Changelist" comment="Move code into new Maven project">
-      <change afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/dictionaries/spych.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" afterDir="false" />
+    <list default="true" id="a4f7391e-203c-45b7-bd54-deb9d2e4ea79" name="Default Changelist" comment="Create updated Maven project, update .gitignore, and further code cleanup">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/nathan2055/reddithistory/App.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/nathan2055/reddithistory/RedditHistory.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -40,11 +35,11 @@
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
-    <property name="project.structure.last.edited" value="Modules" />
-    <property name="project.structure.proportion" value="0.0" />
+    <property name="project.structure.last.edited" value="Project" />
+    <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.2" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
-    <property name="settings.editor.selected.configurable" value="reference.settings.project.maven.importing" />
+    <property name="settings.editor.selected.configurable" value="reference.settings.project.maven.repository.indices" />
   </component>
   <component name="SvnConfiguration">
     <configuration />
@@ -64,32 +59,40 @@
       <option name="project" value="LOCAL" />
       <updated>1581028644975</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Create updated Maven project, update .gitignore, and further code cleanup">
+      <created>1581029884465</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1581029884465</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_NEW_TODO" value="false" />
     <MESSAGE value="Move code into new Maven project" />
-    <option name="LAST_COMMIT_MESSAGE" value="Move code into new Maven project" />
+    <MESSAGE value="Create updated Maven project, update .gitignore, and further code cleanup" />
+    <option name="LAST_COMMIT_MESSAGE" value="Create updated Maven project, update .gitignore, and further code cleanup" />
   </component>
   <component name="WindowStateProjectService">
     <state x="707" y="367" key="ANALYSIS_DLG_com.intellij.analysis.BaseAnalysisAction$1" timestamp="1581029787570">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="707" y="367" key="ANALYSIS_DLG_com.intellij.analysis.BaseAnalysisAction$1/0.0.1920.1040@0.0.1920.1040" timestamp="1581029787570" />
-    <state x="574" y="115" key="CommitChangelistDialog2" timestamp="1581029127503">
+    <state x="574" y="115" key="CommitChangelistDialog2" timestamp="1581030159583">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="574" y="115" key="CommitChangelistDialog2/0.0.1920.1040@0.0.1920.1040" timestamp="1581029127503" />
+    <state x="574" y="115" key="CommitChangelistDialog2/0.0.1920.1040@0.0.1920.1040" timestamp="1581030159583" />
     <state x="349" y="170" width="940" height="675" key="Maven.ArtifactSearchDialog" timestamp="1581029605597">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="349" y="170" width="940" height="675" key="Maven.ArtifactSearchDialog/0.0.1920.1040@0.0.1920.1040" timestamp="1581029605597" />
-    <state x="461" y="163" key="SettingsEditor" timestamp="1581029659731">
+    <state x="461" y="163" key="SettingsEditor" timestamp="1581030136504">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
-    <state x="461" y="163" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1581029659731" />
+    <state x="461" y="163" key="SettingsEditor/0.0.1920.1040@0.0.1920.1040" timestamp="1581030136504" />
     <state x="769" y="437" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1581029121917">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
