@@ -9,8 +9,5 @@
         <module name="reddit-history" />
       </profile>
     </annotationProcessing>
-    <bytecodeTargetLevel>
-      <module name="reddit-history" target="1.8" />
-    </bytecodeTargetLevel>
   </component>
 </project>
